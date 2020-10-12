@@ -23,8 +23,11 @@ namespace Gk1Froms
     {
         Bitmap drawArea;
         List<Polygon> polygons;
-        bool drag;
+        bool dragVertex, dragPolygon, dragEdge;
+        Point pointFrom;
         Vertex vertexP;
+        Polygon polygonP;
+        Edge edgeP;
         Operations operation = Operations.VertexMove;
 
         public Form1()
@@ -33,7 +36,9 @@ namespace Gk1Froms
             polygons = new List<Polygon>();
             drawArea = new Bitmap(pictureBox1.Size.Width, pictureBox1.Size.Height);
             pictureBox1.Image = drawArea;
-            drag = false;
+            dragVertex = false;
+            dragPolygon = false;
+            dragEdge = false;
             operation = Operations.PolygonAdd;
         }
 
@@ -68,7 +73,7 @@ namespace Gk1Froms
                     case Operations.VertexMove:
                         if (FindVertex(e.Location, out vertexP, out _))
                         {
-                            drag = true;
+                            dragVertex = true;
                         }
                         break;
                     case Operations.VertexDelete:
@@ -89,9 +94,40 @@ namespace Gk1Froms
                             UpdateArea();
                         }
                         break;
+                    case Operations.PolygonMove:
+                        if(FindPolygon(e.Location, out polygonP))
+                        {
+                            pointFrom = e.Location;
+                            dragPolygon = true;
+                        }
+                        break;
+                    case Operations.EdgeMove:
+                        if(FindEdge(e.Location, out edgeP, out _))
+                        {
+                            pointFrom = e.Location;
+                            dragEdge = true;
+                        }
+                        break;
                 }
             }
             pictureBox1.Refresh();
+        }
+
+        private bool FindPolygon(Point w, out Polygon polygon)
+        {
+            polygon = null;
+            double dsc = double.MaxValue;
+            foreach(Polygon p in polygons)
+            {
+                double res = p.ClosestDistanceToVerticles(w);
+                if (res < dsc)
+                {
+                    dsc = res;
+                    polygon = p;
+                }
+            }
+
+            return dsc != double.MaxValue;
         }
 
         private bool FindEdge(Point w, out Edge e, out Polygon polygon)
@@ -124,14 +160,30 @@ namespace Gk1Froms
 
         private void pictureBox1_MouseUp(object sender, MouseEventArgs e)
         {
-            drag = false;
+            dragVertex = false;
+            dragPolygon = false;
+            dragEdge = false;
         }
 
         private void pictureBox1_MouseMove(object sender, MouseEventArgs e)
         {
-            if (drag)
+            int dx = e.Location.X - pointFrom.X;
+            int dy = e.Location.Y - pointFrom.Y;
+            pointFrom = e.Location;
+
+            if (dragVertex)
             {
-                vertexP.ChangeLocation(e.Location);
+                vertexP.ChangeLocation(dx, dy);
+                UpdateArea();
+            }
+            if(dragPolygon)
+            {
+                polygonP.ChangeLocation(dx, dy);
+                UpdateArea();
+            }
+            if(dragEdge)
+            {
+                edgeP.ChangeLocation(dx, dy);
                 UpdateArea();
             }
         }
@@ -169,6 +221,15 @@ namespace Gk1Froms
             if (button.Checked)
             {
                 operation = Operations.VertexDelete;
+            }
+        }
+
+        private void edgeMove_CheckedChanged(object sender, EventArgs e)
+        {
+            RadioButton button = sender as RadioButton;
+            if (button.Checked)
+            {
+                operation = Operations.EdgeMove;
             }
         }
 

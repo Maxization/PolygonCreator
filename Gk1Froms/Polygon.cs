@@ -12,7 +12,7 @@ namespace Gk1Froms
 {
     class Vertex
     {
-        const int vertexSize = 10;
+        const int VERTEX_SIZE = 10;
         public int X { get; private set; }
         public int Y { get; private set; }
 
@@ -22,15 +22,19 @@ namespace Gk1Froms
             Y = y;
         }
 
-        public void ChangeLocation(Point e)
+        public void ChangeLocation(int dx, int dy)
         {
-            X -= X - e.X;
-            Y -= Y - e.Y;
+            X += dx;
+            Y += dy;
         }
 
+        public int SquareDistanceFromPoint(Point p)
+        {
+            return (X - p.X) * (X - p.X) + (Y - p.Y) * (Y - p.Y);
+        }
         public bool isPointClose(Point p)
         {
-            double d = (X - p.X) * (X - p.X) + (Y - p.Y) * (Y - p.Y);
+            double d = SquareDistanceFromPoint(p);
             return d < 100;
         }
 
@@ -40,7 +44,7 @@ namespace Gk1Froms
             {
                 Brush brush = new SolidBrush(Color.DimGray);
 
-                g.FillEllipse(brush, X - vertexSize / 2, Y - vertexSize / 2, vertexSize, vertexSize);
+                g.FillEllipse(brush, X - VERTEX_SIZE / 2, Y - VERTEX_SIZE / 2, VERTEX_SIZE, VERTEX_SIZE);
 
                 brush.Dispose();
             }
@@ -76,6 +80,12 @@ namespace Gk1Froms
             return false;
         }
 
+        public void ChangeLocation(int dx, int dy)
+        {
+            A.ChangeLocation(dx, dy);
+            B.ChangeLocation(dx, dy);
+        }
+
         public bool ContainAndGet(Vertex v,out Vertex s)
         {
             s = null;
@@ -97,6 +107,7 @@ namespace Gk1Froms
             using (Graphics g = Graphics.FromImage(b))
             {
                 Pen pen = new Pen(Color.Black, 2);
+
                 //Implement DrawLine
                 g.DrawLine(pen, A, B);
                 A.Draw(b);
@@ -109,6 +120,8 @@ namespace Gk1Froms
 
     class Polygon
     {
+        //How far detect click on edge
+        const int EDGE_DISTANCE = 5;
         List<Edge> edges;
 
         public Polygon(params Vertex[] vertices)
@@ -122,64 +135,72 @@ namespace Gk1Froms
             edges.Add(new Edge(vertices[vertices.Length - 1], vertices[0]));
         }
 
+        public void ChangeLocation(int dx, int dy)
+        {
+            HashSet<Vertex> vertices = new HashSet<Vertex>();
+            foreach(Edge e in edges)
+            {
+                vertices.Add(e.A);
+                vertices.Add(e.B);
+            }
+
+            foreach(Vertex v in vertices)
+            {
+                v.ChangeLocation(dx, dy);
+            }
+        }
+
         public int Count() => edges.Count;
+
+        public double ClosestDistanceToVerticles(Point p)
+        {
+            double res = double.MaxValue;
+            foreach(Edge e in edges)
+            {
+                double dsc = Math.Min(e.A.SquareDistanceFromPoint(p), e.B.SquareDistanceFromPoint(p));
+                if (dsc < res)
+                    res = dsc;
+            }
+
+            return res;
+        }
+
+        public double DistanceFromPointToEdge(Point p, Edge e)
+        {
+            int A = e.A.Y - e.B.Y;
+            int B = e.B.X - e.A.X;
+            int C = e.B.Y * e.A.X - e.A.Y * e.B.X;
+            double k = Math.Sqrt(A * A + B * B);
+            return Math.Abs(A * p.X + B * p.Y + C) / k;
+        }
 
         public bool GetEdge(Point w, out Edge edge, out Polygon polygon)
         {
             edge = null;
             polygon = this;
-            int sum = int.MaxValue;
             foreach(Edge e in edges)
             {
-                int A = e.A.Y - e.B.Y;
-                int B = e.B.X - e.A.X;
-                int C = e.B.Y * e.A.X - e.A.Y * e.B.X;
-                double k = Math.Sqrt(A * A + B * B);
-                double d = Math.Abs(A * w.X + B * w.Y + C) / k;
 
-                int d1 = (e.A.X - w.X) * (e.A.X - w.X) + (e.A.Y - w.Y) * (e.A.Y - w.Y);
-                int d2 = (e.B.X - w.X) * (e.B.X - w.X) + (e.B.Y - w.Y) * (e.B.Y - w.Y);
+                int minX = Math.Min(e.A.X, e.B.X);
+                int maxX = Math.Max(e.A.X, e.B.X);
 
-                int minX, maxX;
-                if(e.A.X > e.B.X)
-                {
-                    maxX = e.A.X;
-                    minX = e.B.X;
-                }
-                else
-                {
-                    maxX = e.B.X;
-                    minX = e.A.X;
-                }
-                int minY, maxY;
-                if (e.A.Y > e.B.Y)
-                {
-                    maxY = e.A.Y;
-                    minY = e.B.Y;
-                }
-                else
-                {
-                    maxY = e.B.Y;
-                    minY = e.A.Y;
-                }
+                int minY = Math.Min(e.A.Y, e.B.Y);
+                int maxY = Math.Max(e.A.Y, e.B.Y);
 
-                maxY += 5;
-                maxX += 5;
-                minX -= 5;
-                minY -= 5;
+                maxY += EDGE_DISTANCE;
+                maxX += EDGE_DISTANCE;
+                minX -= EDGE_DISTANCE;
+                minY -= EDGE_DISTANCE;
 
+                double d = DistanceFromPointToEdge(w, e);
                 if (d < 10 && w.X < maxX && w.X > minX && w.Y < maxY && w.Y > minY)
                 {
-                    
-                    if(sum > d1+d2)
-                    {
-                        sum = d1 + d2;
-                        edge = e;
-                    }
+                    edge = e;
                 }
             }
             return edge != null;
         }
+
         public bool GetVertex(Point w,out Vertex vertex, out Polygon polygon)
         {
             vertex = null;
