@@ -97,7 +97,6 @@ namespace Gk1Froms
             using (Graphics g = Graphics.FromImage(b))
             {
                 Pen pen = new Pen(Color.Black, 2);
-
                 //Implement DrawLine
                 g.DrawLine(pen, A, B);
                 A.Draw(b);
