@@ -10,17 +10,35 @@ using System.Windows.Forms;
 
 namespace Gk1Froms
 {
+    enum RelationType
+    {
+        Vertical, //pozioma
+        Horizontal,
+    }
+    class Relation
+    {
+        Edge edge1;
+        RelationType type;
+    }
     class Vertex
     {
         const int VERTEX_SIZE = 10;
-        public int X { get; private set; }
-        public int Y { get; private set; }
+        public int X { get; set; }
+        public int Y { get; set; }
 
         public Vertex(int x, int y)
         {
             X = x;
             Y = y;
         }
+
+        public Vertex(Point p)
+        {
+            X = p.X;
+            Y = p.Y;
+        }
+
+        public static int GetSize() => VERTEX_SIZE;
 
         public void ChangeLocation(int dx, int dy)
         {
@@ -135,6 +153,15 @@ namespace Gk1Froms
             edges.Add(new Edge(vertices[vertices.Length - 1], vertices[0]));
         }
 
+        public Polygon(params Edge[] edges)
+        {
+            this.edges = new List<Edge>(edges); 
+        }
+
+        public void AddEdge(Edge e)
+        {
+            edges.Add(e);
+        }
         public void ChangeLocation(int dx, int dy)
         {
             HashSet<Vertex> vertices = new HashSet<Vertex>();
@@ -150,16 +177,33 @@ namespace Gk1Froms
             }
         }
 
+        public void MoveEdge(Edge e)
+        {
+            if (!edges.Contains(e)) return;
+        }
+
         public int Count() => edges.Count;
 
-        public double ClosestDistanceToVerticles(Point p)
+        public double ClosestDistanceToEdges(Point p)
         {
             double res = double.MaxValue;
             foreach(Edge e in edges)
             {
-                double dsc = Math.Min(e.A.SquareDistanceFromPoint(p), e.B.SquareDistanceFromPoint(p));
-                if (dsc < res)
-                    res = dsc;
+                double dsc = DistanceFromPointToEdge(p, e);
+                int minX = Math.Min(e.A.X, e.B.X);
+                int maxX = Math.Max(e.A.X, e.B.X);
+
+                minX -= EDGE_DISTANCE;
+                maxX += EDGE_DISTANCE;
+
+                if(p.X > minX && p.X < maxX)
+                {
+                    if (dsc < res)
+                    {
+                        res = dsc;
+                    }
+                }
+
             }
 
             return res;
@@ -174,10 +218,11 @@ namespace Gk1Froms
             return Math.Abs(A * p.X + B * p.Y + C) / k;
         }
 
-        public bool GetEdge(Point w, out Edge edge, out Polygon polygon)
+        public double GetEdge(Point w, out Edge edge, out Polygon polygon)
         {
             edge = null;
             polygon = this;
+            double res = double.MaxValue;
             foreach(Edge e in edges)
             {
 
@@ -196,9 +241,10 @@ namespace Gk1Froms
                 if (d < 10 && w.X < maxX && w.X > minX && w.Y < maxY && w.Y > minY)
                 {
                     edge = e;
+                    res = d;
                 }
             }
-            return edge != null;
+            return res;
         }
 
         public bool GetVertex(Point w,out Vertex vertex, out Polygon polygon)

@@ -32,6 +32,8 @@
             this.panel1 = new System.Windows.Forms.Panel();
             this.pictureBox1 = new System.Windows.Forms.PictureBox();
             this.groupBox1 = new System.Windows.Forms.GroupBox();
+            this.edgeMove = new System.Windows.Forms.RadioButton();
+            this.label3 = new System.Windows.Forms.Label();
             this.VertexDelete = new System.Windows.Forms.RadioButton();
             this.VertexMove = new System.Windows.Forms.RadioButton();
             this.VertexAdd = new System.Windows.Forms.RadioButton();
@@ -39,8 +41,7 @@
             this.label1 = new System.Windows.Forms.Label();
             this.PolygonMove = new System.Windows.Forms.RadioButton();
             this.PolygonAdd = new System.Windows.Forms.RadioButton();
-            this.label3 = new System.Windows.Forms.Label();
-            this.edgeMove = new System.Windows.Forms.RadioButton();
+            this.polygonDelete = new System.Windows.Forms.RadioButton();
             this.tableLayoutPanel1.SuspendLayout();
             this.panel1.SuspendLayout();
             ((System.ComponentModel.ISupportInitialize)(this.pictureBox1)).BeginInit();
@@ -88,6 +89,7 @@
             // 
             // groupBox1
             // 
+            this.groupBox1.Controls.Add(this.polygonDelete);
             this.groupBox1.Controls.Add(this.edgeMove);
             this.groupBox1.Controls.Add(this.label3);
             this.groupBox1.Controls.Add(this.VertexDelete);
@@ -103,6 +105,27 @@
             this.groupBox1.TabIndex = 1;
             this.groupBox1.TabStop = false;
             this.groupBox1.Text = "Edit";
+            // 
+            // edgeMove
+            // 
+            this.edgeMove.AutoSize = true;
+            this.edgeMove.Location = new System.Drawing.Point(156, 48);
+            this.edgeMove.Name = "edgeMove";
+            this.edgeMove.Size = new System.Drawing.Size(52, 17);
+            this.edgeMove.TabIndex = 9;
+            this.edgeMove.Text = "Move";
+            this.edgeMove.UseVisualStyleBackColor = true;
+            this.edgeMove.CheckedChanged += new System.EventHandler(this.edgeMove_CheckedChanged);
+            // 
+            // label3
+            // 
+            this.label3.AutoSize = true;
+            this.label3.Font = new System.Drawing.Font("Microsoft Sans Serif", 10F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(238)));
+            this.label3.Location = new System.Drawing.Point(153, 28);
+            this.label3.Name = "label3";
+            this.label3.Size = new System.Drawing.Size(41, 17);
+            this.label3.TabIndex = 8;
+            this.label3.Text = "Edge";
             // 
             // VertexDelete
             // 
@@ -181,26 +204,16 @@
             this.PolygonAdd.UseVisualStyleBackColor = true;
             this.PolygonAdd.CheckedChanged += new System.EventHandler(this.PolygonAdd_CheckedChanged);
             // 
-            // label3
+            // polygonDelete
             // 
-            this.label3.AutoSize = true;
-            this.label3.Font = new System.Drawing.Font("Microsoft Sans Serif", 10F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(238)));
-            this.label3.Location = new System.Drawing.Point(153, 28);
-            this.label3.Name = "label3";
-            this.label3.Size = new System.Drawing.Size(41, 17);
-            this.label3.TabIndex = 8;
-            this.label3.Text = "Edge";
-            // 
-            // edgeMove
-            // 
-            this.edgeMove.AutoSize = true;
-            this.edgeMove.Location = new System.Drawing.Point(156, 48);
-            this.edgeMove.Name = "edgeMove";
-            this.edgeMove.Size = new System.Drawing.Size(52, 17);
-            this.edgeMove.TabIndex = 9;
-            this.edgeMove.Text = "Move";
-            this.edgeMove.UseVisualStyleBackColor = true;
-            this.edgeMove.CheckedChanged += new System.EventHandler(this.edgeMove_CheckedChanged);
+            this.polygonDelete.AutoSize = true;
+            this.polygonDelete.Location = new System.Drawing.Point(9, 95);
+            this.polygonDelete.Name = "polygonDelete";
+            this.polygonDelete.Size = new System.Drawing.Size(56, 17);
+            this.polygonDelete.TabIndex = 10;
+            this.polygonDelete.Text = "Delete";
+            this.polygonDelete.UseVisualStyleBackColor = true;
+            this.polygonDelete.CheckedChanged += new System.EventHandler(this.polygonDelete_CheckedChanged);
             // 
             // Form1
             // 
@@ -235,6 +248,7 @@
         private System.Windows.Forms.Label label1;
         private System.Windows.Forms.RadioButton edgeMove;
         private System.Windows.Forms.Label label3;
+        private System.Windows.Forms.RadioButton polygonDelete;
     }
 }
 
