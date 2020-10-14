@@ -75,7 +75,8 @@ namespace Gk1Froms
                         }
                         else
                         {
-                            if (Math.Abs(e.Location.X - startVertex.X) < Vertex.GetSize()+20 && Math.Abs(e.Location.Y - startVertex.Y) < Vertex.GetSize() + 20 && newPolygon.Count() > 2)
+                            if (Math.Abs(e.Location.X - startVertex.X) < Vertex.GetSize() + 20 
+                                && Math.Abs(e.Location.Y - startVertex.Y) < Vertex.GetSize() + 20 && newPolygon.Count() > 2)
                             {
                                 newEdge.B = startVertex;
                                 startCreating = false;
@@ -91,7 +92,7 @@ namespace Gk1Froms
                         UpdateArea();
                         break;
                     case Operations.VertexMove:
-                        if (FindVertex(e.Location, out vertexP, out _))
+                        if (FindVertex(e.Location, out vertexP, out polygonP))
                         {
                             dragVertex = true;
                         }
@@ -122,7 +123,7 @@ namespace Gk1Froms
                         }
                         break;
                     case Operations.EdgeMove:
-                        if(FindEdge(e.Location, out edgeP, out _))
+                        if(FindEdge(e.Location, out edgeP, out polygonP))
                         {
                             pointFrom = e.Location;
                             dragEdge = true;
@@ -137,6 +138,42 @@ namespace Gk1Froms
                         break;
                 }
             }
+            else if(e.Button == MouseButtons.Right)
+            {
+                if (dragEdge || dragPolygon || dragVertex || startCreating) return;
+                if (FindEdge(e.Location, out edgeP, out polygonP))
+                {
+                    ContextMenu cm = CreateMenu();
+                    cm.Show(pictureBox1, e.Location);
+                }
+            }
+            pictureBox1.Refresh();
+        }
+
+        ContextMenu CreateMenu()
+        {
+            ContextMenu cm = new ContextMenu();
+            cm.MenuItems.Add("Vertical", new EventHandler(VerticalR_Click));
+            cm.MenuItems.Add("Horizontal", new EventHandler(HorizontalR_Click));
+            cm.MenuItems.Add("Delete relation", new EventHandler(Delete_Click));
+            return cm;
+        }
+
+        private void Delete_Click(object sender, EventArgs e)
+        {
+            polygonP.DeleteRelation(edgeP);
+        }
+
+        private void HorizontalR_Click(object sender, EventArgs e)
+        {
+            polygonP.AddRelation(edgeP, RelationType.Horizontal);
+            UpdateArea();
+            pictureBox1.Refresh();
+        }
+        private void VerticalR_Click(object sender, EventArgs e)
+        {
+            polygonP.AddRelation(edgeP, RelationType.Vertical);
+            UpdateArea();
             pictureBox1.Refresh();
         }
 
@@ -212,9 +249,11 @@ namespace Gk1Froms
                 newVertex.ChangeLocation(dx, dy);
                 UpdateArea();
             }
+
+
             if (dragVertex)
             {
-                vertexP.ChangeLocation(dx, dy);
+                polygonP.MoveVertex(vertexP, dx, dy);
                 UpdateArea();
             }
             if(dragPolygon)
@@ -224,7 +263,7 @@ namespace Gk1Froms
             }
             if(dragEdge)
             {
-                edgeP.ChangeLocation(dx, dy);
+                polygonP.MoveEdge(edgeP, dx, dy);
                 UpdateArea();
             }
         }

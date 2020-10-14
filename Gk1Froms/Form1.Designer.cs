@@ -31,7 +31,9 @@
             this.tableLayoutPanel1 = new System.Windows.Forms.TableLayoutPanel();
             this.panel1 = new System.Windows.Forms.Panel();
             this.pictureBox1 = new System.Windows.Forms.PictureBox();
+            this.panel2 = new System.Windows.Forms.Panel();
             this.groupBox1 = new System.Windows.Forms.GroupBox();
+            this.polygonDelete = new System.Windows.Forms.RadioButton();
             this.edgeMove = new System.Windows.Forms.RadioButton();
             this.label3 = new System.Windows.Forms.Label();
             this.VertexDelete = new System.Windows.Forms.RadioButton();
@@ -41,10 +43,10 @@
             this.label1 = new System.Windows.Forms.Label();
             this.PolygonMove = new System.Windows.Forms.RadioButton();
             this.PolygonAdd = new System.Windows.Forms.RadioButton();
-            this.polygonDelete = new System.Windows.Forms.RadioButton();
             this.tableLayoutPanel1.SuspendLayout();
             this.panel1.SuspendLayout();
             ((System.ComponentModel.ISupportInitialize)(this.pictureBox1)).BeginInit();
+            this.panel2.SuspendLayout();
             this.groupBox1.SuspendLayout();
             this.SuspendLayout();
             // 
@@ -53,7 +55,7 @@
             this.tableLayoutPanel1.ColumnCount = 1;
             this.tableLayoutPanel1.ColumnStyles.Add(new System.Windows.Forms.ColumnStyle(System.Windows.Forms.SizeType.Percent, 50F));
             this.tableLayoutPanel1.Controls.Add(this.panel1, 0, 1);
-            this.tableLayoutPanel1.Controls.Add(this.groupBox1, 0, 0);
+            this.tableLayoutPanel1.Controls.Add(this.panel2, 0, 0);
             this.tableLayoutPanel1.Dock = System.Windows.Forms.DockStyle.Fill;
             this.tableLayoutPanel1.Location = new System.Drawing.Point(0, 0);
             this.tableLayoutPanel1.Name = "tableLayoutPanel1";
@@ -87,6 +89,15 @@
             this.pictureBox1.MouseMove += new System.Windows.Forms.MouseEventHandler(this.pictureBox1_MouseMove);
             this.pictureBox1.MouseUp += new System.Windows.Forms.MouseEventHandler(this.pictureBox1_MouseUp);
             // 
+            // panel2
+            // 
+            this.panel2.Controls.Add(this.groupBox1);
+            this.panel2.Dock = System.Windows.Forms.DockStyle.Left;
+            this.panel2.Location = new System.Drawing.Point(3, 3);
+            this.panel2.Name = "panel2";
+            this.panel2.Size = new System.Drawing.Size(272, 119);
+            this.panel2.TabIndex = 1;
+            // 
             // groupBox1
             // 
             this.groupBox1.Controls.Add(this.polygonDelete);
@@ -99,12 +110,24 @@
             this.groupBox1.Controls.Add(this.label1);
             this.groupBox1.Controls.Add(this.PolygonMove);
             this.groupBox1.Controls.Add(this.PolygonAdd);
-            this.groupBox1.Location = new System.Drawing.Point(3, 3);
+            this.groupBox1.Dock = System.Windows.Forms.DockStyle.Fill;
+            this.groupBox1.Location = new System.Drawing.Point(0, 0);
             this.groupBox1.Name = "groupBox1";
-            this.groupBox1.Size = new System.Drawing.Size(287, 119);
-            this.groupBox1.TabIndex = 1;
+            this.groupBox1.Size = new System.Drawing.Size(272, 119);
+            this.groupBox1.TabIndex = 2;
             this.groupBox1.TabStop = false;
             this.groupBox1.Text = "Edit";
+            // 
+            // polygonDelete
+            // 
+            this.polygonDelete.AutoSize = true;
+            this.polygonDelete.Location = new System.Drawing.Point(9, 95);
+            this.polygonDelete.Name = "polygonDelete";
+            this.polygonDelete.Size = new System.Drawing.Size(56, 17);
+            this.polygonDelete.TabIndex = 10;
+            this.polygonDelete.Text = "Delete";
+            this.polygonDelete.UseVisualStyleBackColor = true;
+            this.polygonDelete.CheckedChanged += new System.EventHandler(this.polygonDelete_CheckedChanged);
             // 
             // edgeMove
             // 
@@ -204,17 +227,6 @@
             this.PolygonAdd.UseVisualStyleBackColor = true;
             this.PolygonAdd.CheckedChanged += new System.EventHandler(this.PolygonAdd_CheckedChanged);
             // 
-            // polygonDelete
-            // 
-            this.polygonDelete.AutoSize = true;
-            this.polygonDelete.Location = new System.Drawing.Point(9, 95);
-            this.polygonDelete.Name = "polygonDelete";
-            this.polygonDelete.Size = new System.Drawing.Size(56, 17);
-            this.polygonDelete.TabIndex = 10;
-            this.polygonDelete.Text = "Delete";
-            this.polygonDelete.UseVisualStyleBackColor = true;
-            this.polygonDelete.CheckedChanged += new System.EventHandler(this.polygonDelete_CheckedChanged);
-            // 
             // Form1
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
@@ -227,6 +239,7 @@
             this.panel1.ResumeLayout(false);
             this.panel1.PerformLayout();
             ((System.ComponentModel.ISupportInitialize)(this.pictureBox1)).EndInit();
+            this.panel2.ResumeLayout(false);
             this.groupBox1.ResumeLayout(false);
             this.groupBox1.PerformLayout();
             this.ResumeLayout(false);
@@ -238,17 +251,18 @@
         private System.Windows.Forms.TableLayoutPanel tableLayoutPanel1;
         private System.Windows.Forms.Panel panel1;
         private System.Windows.Forms.PictureBox pictureBox1;
+        private System.Windows.Forms.Panel panel2;
         private System.Windows.Forms.GroupBox groupBox1;
-        private System.Windows.Forms.RadioButton PolygonAdd;
-        private System.Windows.Forms.RadioButton PolygonMove;
+        private System.Windows.Forms.RadioButton polygonDelete;
+        private System.Windows.Forms.RadioButton edgeMove;
+        private System.Windows.Forms.Label label3;
         private System.Windows.Forms.RadioButton VertexDelete;
         private System.Windows.Forms.RadioButton VertexMove;
         private System.Windows.Forms.RadioButton VertexAdd;
         private System.Windows.Forms.Label label2;
         private System.Windows.Forms.Label label1;
-        private System.Windows.Forms.RadioButton edgeMove;
-        private System.Windows.Forms.Label label3;
-        private System.Windows.Forms.RadioButton polygonDelete;
+        private System.Windows.Forms.RadioButton PolygonMove;
+        private System.Windows.Forms.RadioButton PolygonAdd;
     }
 }
 
