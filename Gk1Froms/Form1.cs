@@ -18,13 +18,17 @@ namespace Gk1Froms
         EdgeMove,
         PolygonMove,
         VertexDelete,
+        PolygonDelete,
     }
     public partial class Form1 : Form
     {
         Bitmap drawArea;
         List<Polygon> polygons;
-        bool drag;
-        Vertex vertexP;
+        bool dragVertex, dragPolygon, dragEdge, startCreating;
+        Point pointFrom;
+        Vertex vertexP, newVertex, startVertex;
+        Polygon polygonP, newPolygon;
+        Edge edgeP, newEdge;
         Operations operation = Operations.VertexMove;
 
         public Form1()
@@ -33,7 +37,10 @@ namespace Gk1Froms
             polygons = new List<Polygon>();
             drawArea = new Bitmap(pictureBox1.Size.Width, pictureBox1.Size.Height);
             pictureBox1.Image = drawArea;
-            drag = false;
+            dragVertex = false;
+            dragPolygon = false;
+            dragEdge = false;
+            startCreating = false;
             operation = Operations.PolygonAdd;
         }
 
@@ -57,18 +64,37 @@ namespace Gk1Froms
                 switch (operation)
                 {
                     case Operations.PolygonAdd:
-                        Vertex p1 = new Vertex(e.X, e.Y);
-                        Vertex p2 = new Vertex(e.X, e.Y + 100);
-                        Vertex p3 = new Vertex(e.X + 100, e.Y + 100);
-                        Vertex p4 = new Vertex(e.X + 100, e.Y);
-                        poly = new Polygon(p1, p2, p3, p4);
-                        polygons.Add(poly);
-                        poly.Draw(drawArea);
+                        if(!startCreating)
+                        {
+                            startCreating = true;
+                            newVertex = new Vertex(e.Location);
+                            startVertex = new Vertex(e.Location);
+                            newEdge = new Edge(startVertex, newVertex);
+                            newPolygon = new Polygon(newEdge);
+                            polygons.Add(newPolygon);
+                        }
+                        else
+                        {
+                            if (Math.Abs(e.Location.X - startVertex.X) < Vertex.GetSize() + 20 
+                                && Math.Abs(e.Location.Y - startVertex.Y) < Vertex.GetSize() + 20 && newPolygon.Count() > 2)
+                            {
+                                newEdge.B = startVertex;
+                                startCreating = false;
+                            }
+                            else
+                            {
+                                Vertex v = new Vertex(e.Location);
+                                newEdge = new Edge(newVertex, v);
+                                newPolygon.AddEdge(newEdge);
+                                newVertex = v;
+                            }
+                        }
+                        UpdateArea();
                         break;
                     case Operations.VertexMove:
-                        if (FindVertex(e.Location, out vertexP, out _))
+                        if (FindVertex(e.Location, out vertexP, out polygonP))
                         {
-                            drag = true;
+                            dragVertex = true;
                         }
                         break;
                     case Operations.VertexDelete:
@@ -89,23 +115,106 @@ namespace Gk1Froms
                             UpdateArea();
                         }
                         break;
+                    case Operations.PolygonMove:
+                        if(FindPolygon(e.Location, out polygonP))
+                        {
+                            pointFrom = e.Location;
+                            dragPolygon = true;
+                        }
+                        break;
+                    case Operations.EdgeMove:
+                        if(FindEdge(e.Location, out edgeP, out polygonP))
+                        {
+                            pointFrom = e.Location;
+                            dragEdge = true;
+                        }
+                        break;
+                    case Operations.PolygonDelete:
+                        if(FindPolygon(e.Location, out poly))
+                        {
+                            polygons.Remove(poly);
+                            UpdateArea();
+                        }
+                        break;
+                }
+            }
+            else if(e.Button == MouseButtons.Right)
+            {
+                if (dragEdge || dragPolygon || dragVertex || startCreating) return;
+                if (FindEdge(e.Location, out edgeP, out polygonP))
+                {
+                    ContextMenu cm = CreateMenu();
+                    cm.Show(pictureBox1, e.Location);
                 }
             }
             pictureBox1.Refresh();
+        }
+
+        ContextMenu CreateMenu()
+        {
+            ContextMenu cm = new ContextMenu();
+            cm.MenuItems.Add("Vertical", new EventHandler(VerticalR_Click));
+            cm.MenuItems.Add("Horizontal", new EventHandler(HorizontalR_Click));
+            cm.MenuItems.Add("Delete relation", new EventHandler(Delete_Click));
+            return cm;
+        }
+
+        private void Delete_Click(object sender, EventArgs e)
+        {
+            polygonP.DeleteRelation(edgeP);
+        }
+
+        private void HorizontalR_Click(object sender, EventArgs e)
+        {
+            polygonP.AddRelation(edgeP, RelationType.Horizontal);
+            UpdateArea();
+            pictureBox1.Refresh();
+        }
+        private void VerticalR_Click(object sender, EventArgs e)
+        {
+            polygonP.AddRelation(edgeP, RelationType.Vertical);
+            UpdateArea();
+            pictureBox1.Refresh();
+        }
+
+        private bool FindPolygon(Point w, out Polygon polygon)
+        {
+            polygon = null;
+            double dsc = double.MaxValue;
+            foreach(Polygon p in polygons)
+            {
+                double res = p.ClosestDistanceToEdges(w);
+                if (res < dsc)
+                {
+                    dsc = res;
+                    polygon = p;
+                }
+            }
+
+            return dsc != double.MaxValue;
         }
 
         private bool FindEdge(Point w, out Edge e, out Polygon polygon)
         {
             e = null;
             polygon = null;
+            double best = double.MaxValue;
+            double res;
+            Edge bestE = null;
+            Polygon bestP = null;
             foreach(Polygon p in polygons)
             {
-                if(p.GetEdge(w, out e, out polygon))
+                res = p.GetEdge(w, out e, out polygon);
+                if(best>res)
                 {
-                    return true;
+                    best = res;
+                    bestE = e;
+                    bestP = polygon;
                 }
             }
-            return false;
+            e = bestE;
+            polygon = bestP;
+            return best != double.MaxValue;
         }
 
         private bool FindVertex(Point w, out Vertex vertex, out Polygon polygon)
@@ -124,61 +233,87 @@ namespace Gk1Froms
 
         private void pictureBox1_MouseUp(object sender, MouseEventArgs e)
         {
-            drag = false;
+            dragVertex = false;
+            dragPolygon = false;
+            dragEdge = false;
         }
 
         private void pictureBox1_MouseMove(object sender, MouseEventArgs e)
         {
-            if (drag)
+            int dx = e.Location.X - pointFrom.X;
+            int dy = e.Location.Y - pointFrom.Y;
+            pointFrom = e.Location;
+
+            if(startCreating)
             {
-                vertexP.ChangeLocation(e.Location);
+                newVertex.ChangeLocation(dx, dy);
                 UpdateArea();
+            }
+
+
+            if (dragVertex)
+            {
+                polygonP.MoveVertex(vertexP, dx, dy);
+                UpdateArea();
+            }
+            if(dragPolygon)
+            {
+                polygonP.ChangeLocation(dx, dy);
+                UpdateArea();
+            }
+            if(dragEdge)
+            {
+                polygonP.MoveEdge(edgeP, dx, dy);
+                UpdateArea();
+            }
+        }
+
+        private void RadioButtonFunc(RadioButton button, Operations opt)
+        {
+            if (startCreating)
+            {
+                PolygonAdd.Checked = true;
+                return;
+            }
+            if (button.Checked)
+            {
+                operation = opt;
             }
         }
 
         private void PolygonAdd_CheckedChanged(object sender, EventArgs e)
         {
-            RadioButton button = sender as RadioButton;
-            if(button.Checked)
-            {
-                operation = Operations.PolygonAdd;
-            }
+            RadioButtonFunc((RadioButton)sender, Operations.PolygonAdd);
         }
 
         private void PolygonMove_CheckedChanged(object sender, EventArgs e)
         {
-            RadioButton button = sender as RadioButton;
-            if (button.Checked)
-            {
-                operation = Operations.PolygonMove;
-            }
+            RadioButtonFunc((RadioButton)sender, Operations.PolygonMove);
         }
 
         private void VertexMove_CheckedChanged(object sender, EventArgs e)
         {
-            RadioButton button = sender as RadioButton;
-            if (button.Checked)
-            {
-                operation = Operations.VertexMove;
-            }
+            RadioButtonFunc((RadioButton)sender, Operations.VertexMove);
         }
 
         private void VertexDelete_CheckedChanged(object sender, EventArgs e)
         {
-            RadioButton button = sender as RadioButton;
-            if (button.Checked)
-            {
-                operation = Operations.VertexDelete;
-            }
+            RadioButtonFunc((RadioButton)sender, Operations.VertexDelete);
+        }
+
+        private void polygonDelete_CheckedChanged(object sender, EventArgs e)
+        {
+            RadioButtonFunc((RadioButton)sender, Operations.PolygonDelete);
+        }
+
+        private void edgeMove_CheckedChanged(object sender, EventArgs e)
+        {
+            RadioButtonFunc((RadioButton)sender, Operations.EdgeMove);
         }
 
         private void VertexAdd_CheckedChanged(object sender, EventArgs e)
         {
-            RadioButton button = sender as RadioButton;
-            if (button.Checked)
-            {
-                operation = Operations.VertexAdd;
-            }
+            RadioButtonFunc((RadioButton)sender, Operations.VertexAdd);
         }
     }
 }
