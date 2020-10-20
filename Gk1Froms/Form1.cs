@@ -42,6 +42,7 @@ namespace Gk1Froms
             dragEdge = false;
             startCreating = false;
             operation = Operations.PolygonAdd;
+            
         }
 
         void UpdateArea()
@@ -71,6 +72,7 @@ namespace Gk1Froms
                             startVertex = new Vertex(e.Location);
                             newEdge = new Edge(startVertex, newVertex);
                             newPolygon = new Polygon(newEdge);
+                            newPolygon.test = pictureBox1;
                             polygons.Add(newPolygon);
                         }
                         else
@@ -141,13 +143,25 @@ namespace Gk1Froms
             else if(e.Button == MouseButtons.Right)
             {
                 if (dragEdge || dragPolygon || dragVertex || startCreating) return;
-                if (FindEdge(e.Location, out edgeP, out polygonP))
+                if(FindVertex(e.Location, out vertexP, out polygonP))
+                {
+                    ContextMenu cm = CreateMenuV();
+                    cm.Show(pictureBox1, e.Location);
+                }
+                else if (FindEdge(e.Location, out edgeP, out polygonP))
                 {
                     ContextMenu cm = CreateMenu();
                     cm.Show(pictureBox1, e.Location);
                 }
             }
             pictureBox1.Refresh();
+        }
+
+        ContextMenu CreateMenuV()
+        {
+            ContextMenu cm = new ContextMenu();
+            cm.MenuItems.Add("Add Angle", new EventHandler(Angle_Click));
+            return cm;
         }
 
         ContextMenu CreateMenu()
@@ -157,6 +171,26 @@ namespace Gk1Froms
             cm.MenuItems.Add("Horizontal", new EventHandler(HorizontalR_Click));
             cm.MenuItems.Add("Delete relation", new EventHandler(Delete_Click));
             return cm;
+        }
+
+        private void Angle_Click(object sender, EventArgs e)
+        {
+            double angle = 0;
+            Form2 form2 = new Form2(polygonP.GetAngle(vertexP));
+
+            if (form2.ShowDialog(this) == DialogResult.OK)
+            {
+                angle = double.Parse(form2.GetText());
+            }
+            else
+            {
+                return;
+            }
+
+            form2.Dispose();
+            polygonP.AddRelation(vertexP, RelationType.Angle, angle);
+            UpdateArea();
+            pictureBox1.Refresh();
         }
 
         private void Delete_Click(object sender, EventArgs e)
