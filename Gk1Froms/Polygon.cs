@@ -25,7 +25,7 @@ namespace Gk1Froms
     {
         //Naprawia relacje i zwraca zmieniony wierzcholek
         public PictureBox test;
-        public abstract Vertex Fix(Vertex v, int dx, int dy);
+        public abstract Vertex[] Fix(Vertex v, ref int dx, ref int dy);
         public abstract bool ContainVertex(Vertex v);
     }
     class HorizontalRelation : Relation
@@ -36,12 +36,12 @@ namespace Gk1Froms
             Edge = e;
         }
 
-        public override Vertex Fix(Vertex v, int dx, int dy)
+        public override Vertex[] Fix(Vertex v, ref int dx, ref int dy)
         {
             Vertex k = v == Edge.A ? Edge.B : Edge.A;
             k.Y = v.Y;
 
-            return k;
+            return new Vertex[] { k };
         }
 
         public override bool ContainVertex(Vertex v)
@@ -63,27 +63,33 @@ namespace Gk1Froms
             return Edge.A == v || Edge.B == v;
         }
 
-        public override Vertex Fix(Vertex v, int dx, int dy)
+        public override Vertex[] Fix(Vertex v, ref int dx, ref int dy)
         {
             Vertex k = v == Edge.A ? Edge.B : Edge.A;
             k.X = v.X;
-            return k;
+            return new Vertex[] { k };
         }
     }
 
     class AngleRelation: Relation
     {
-        double angle;
+        double A1, A2;
         Edge edge1, edge2;
-        public AngleRelation(Edge e,Edge e2, double angle)
+        public AngleRelation(Edge e,Edge e2)
         {
             edge1 = e;
             edge2 = e2;
-            this.angle = angle;
+
+            Vertex w = edge1.A == edge2.A || edge1.A == edge2.B ? edge1.A : edge1.B;
+            Vertex v1 = edge1.A == w ? edge1.B : edge1.A;
+            Vertex v2 = edge2.A == w ? edge2.B : edge2.A;
+
+            A1 = (double)(w.Y - v1.Y) / (double)(w.X - v1.X);
+            A2 = (double)(w.Y - v2.Y) / (double)(w.X - v2.X);
 
         }
 
-        public override Vertex Fix(Vertex v, int dx, int dy)
+        public override Vertex[] Fix(Vertex v, ref int dx, ref int dy)
         {
             Vertex w = edge1.A == edge2.A || edge1.A == edge2.B ? edge1.A : edge1.B;
             Vertex v1 = edge1.A == w ? edge1.B : edge1.A;
@@ -91,32 +97,46 @@ namespace Gk1Froms
 
             if( w != v)
             {
-                if (v != v1)
+                //v1 ------ w ==== A1
+                //v2 ------ w ==== A2
+                double B1 = v1.Y - A1 * v1.X;
+                double B2 = v2.Y - A2 * v2.X;
+                if (v == v1)
                 {
-                    Vertex k = v1;
-                    v1 = v2;
-                    v2 = k;
+                    double newX = (B2 + dy - B1 - A2 * dx) / (A1 - A2);
+                    double newY = A1 * newX + B1;
+                    w.X = (int)(newX);
+                    w.Y = (int)(newY);
+
+                    //using (Graphics g = Graphics.FromImage(test.Image))
+                    //{
+                    //    Pen pen = new Pen(Color.Red);
+                    //    g.DrawLine(pen, new Point(w.X - 50, (int)(A2 * (w.X - 50) + B2)), new Point(w.X + 50, (int)(A2 * (w.X + 50) + B2)));
+                    //    g.DrawLine(pen, new Point(w.X - 50, (int)(A1 * (w.X - 50) + B1)), new Point(w.X + 50, (int)(A1 * (w.X + 50) + B1)));
+                    //    //g.DrawLine(pen, oldLoc, w);
+                    //    //g.DrawLine(pen, w, v2);
+                    //    test.Refresh();
+                    //}  
                 }
-
-                double A = (double)(w.Y - v2.Y) / (double)(w.X - v2.X);
-                double B = w.Y - ((double)(w.Y - v2.Y) / (double)(w.X - v2.X)) * w.X;
-
-                
-
-                double newX = (BB2 + dy - B - A2 * dx) / (A - A2);
-                double newY = A * newX + B;
-
-                //using(Graphics g = Graphics.FromImage(test.Image))
-                //{
-                //    Pen pen = new Pen(Color.Red);
-                //    g.DrawLine(pen, new Point(w.X - 50, (int)(A2 * (w.X - 50) + B2)), new Point(w.X + 50, (int)(A2 * (w.X + 50) + B2)));
-                //    test.Refresh();
-                //}
-
-                w.X = (int)newX;
-                w.Y = (int)newY;
+                else
+                {
+                    double newX = (B1 + dy - B2 - A1 * dx) / (A2 - A1);
+                    double newY = A1 * newX + B1;
+                    w.X = (int)(newX);
+                    w.Y = (int)(newY);
+                }       
             }
-            return w;
+            else
+            {
+                v1.X += dx;
+                v1.Y += dy;
+
+                v2.X += dx;
+                v2.Y += dy;
+
+                return new Vertex[] { v1, v2 };
+            }
+            return new Vertex[] { w };
         }
 
         public override bool ContainVertex(Vertex v)
@@ -316,7 +336,6 @@ namespace Gk1Froms
 
         public void MoveVertex(Vertex v, int dx, int dy)
         {
-            dx = 0;
             if (!ContainsVertex(v)) return;
             v.ChangeLocation(dx, dy);
             FixRelation(v, relations, dx, dy);
@@ -330,10 +349,14 @@ namespace Gk1Froms
             foreach(Relation r in vertexRel)
             {
                 r.test = this.test;
-                Vertex changedV = r.Fix(v, dx, dy);
+                Vertex[] changedV = r.Fix(v, ref dx, ref dy);
                 List<Relation> changedVrel = new List<Relation>(vertexRel);
                 changedVrel.Remove(r);
-                FixRelation(changedV, changedVrel, dx, dy);
+                foreach(Vertex k in changedV)
+                {
+                    FixRelation(k, changedVrel, dx, dy);
+                }
+                
             }
         }
 
@@ -410,11 +433,8 @@ namespace Gk1Froms
             }
             if (!CanAddRelation(e2[0], r) || !CanAddRelation(e2[1], r)) return;
 
-            //Vertex v1 = e2[0].A == v ? e2[0].B : e2[0].A;
             Vertex v2 = e2[1].A == v ? e2[1].B : e2[1].A;
             Point w2 = new Point(v2.X - v.X, v2.Y - v.Y);
-
-
 
             double prevAngle = GetAngle(v);
 
@@ -426,7 +446,7 @@ namespace Gk1Froms
             v2.X = newW.X + v.X;
             v2.Y = newW.Y + v.Y;
 
-            AngleRelation angleR = new AngleRelation(e2[0], e2[1], angle);
+            AngleRelation angleR = new AngleRelation(e2[0], e2[1]);
             relations.Add(angleR);
         }
 
