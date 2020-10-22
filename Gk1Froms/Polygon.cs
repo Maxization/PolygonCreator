@@ -14,21 +14,25 @@ using System.Windows.Forms;
 
 namespace Gk1Froms
 {
-    enum RelationType
+    public enum RelationType
     {
         Vertical,
-        Horizontal, //pozioma
+        Horizontal,
         Angle,
+        NoRelation,
     }
-
-    abstract class Relation
+    [Serializable]
+    public abstract class Relation
     {
         //Naprawia relacje i zwraca zmieniony wierzcholek
-        public PictureBox test;
         public abstract Vertex[] Fix(Vertex v, ref int dx, ref int dy);
         public abstract bool ContainVertex(Vertex v);
+
+        public abstract void Clear();
     }
-    class HorizontalRelation : Relation
+    
+    [Serializable]
+    public class HorizontalRelation : Relation
     {
         public Edge Edge { get; set; }
         public HorizontalRelation(Edge e)
@@ -39,6 +43,7 @@ namespace Gk1Froms
         public override Vertex[] Fix(Vertex v, ref int dx, ref int dy)
         {
             Vertex k = v == Edge.A ? Edge.B : Edge.A;
+            if (k.Y == v.Y) return new Vertex[] { };
             k.Y = v.Y;
 
             return new Vertex[] { k };
@@ -48,9 +53,16 @@ namespace Gk1Froms
         {
             return Edge.A == v || Edge.B == v;
         }
+
+        public override void Clear()
+        {
+            Edge.RelationTypeE = RelationType.NoRelation;
+        }
+
     }
 
-    class VerticalRelation : Relation
+    [Serializable]
+    public class VerticalRelation : Relation
     {
         public Edge Edge { get; set; }
 
@@ -66,12 +78,19 @@ namespace Gk1Froms
         public override Vertex[] Fix(Vertex v, ref int dx, ref int dy)
         {
             Vertex k = v == Edge.A ? Edge.B : Edge.A;
+            if (k.X == v.X) return new Vertex[] { };
             k.X = v.X;
             return new Vertex[] { k };
         }
+
+        public override void Clear()
+        {
+            Edge.RelationTypeE = RelationType.NoRelation;
+        }
     }
 
-    class AngleRelation: Relation
+    [Serializable]
+    public class AngleRelation: Relation
     {
         double A1, A2;
         Edge edge1, edge2;
@@ -89,6 +108,32 @@ namespace Gk1Froms
 
         }
 
+        public Vertex[] MoveEdge(Edge e, int dx, int dy)
+        {
+            Vertex w = edge1.A == edge2.A || edge1.A == edge2.B ? edge1.A : edge1.B;
+            Vertex v1 = edge1.A == w ? edge1.B : edge1.A;
+            Vertex v2 = edge2.A == w ? edge2.B : edge2.A;
+
+            // w --- v1 === A1
+            if((e.A == w || e.B == w) && (e.A == v1 || e.B == v1))
+            {
+                w.ChangeLocation(dx, dy);
+                v1.ChangeLocation(dx, dy);
+
+                double B2 = w.Y - A2 * w.X;
+                v2.Y = (int)(A2 * v2.X + B2);
+            }
+            else
+            {
+                w.ChangeLocation(dx, dy);
+                v2.ChangeLocation(dx, dy);
+                double B1 = w.Y - A1 * w.X;
+                v1.Y = (int)(A1 * v1.X + B1);
+            }
+            return new Vertex[] { v1, v2 };
+
+        }
+
         public override Vertex[] Fix(Vertex v, ref int dx, ref int dy)
         {
             Vertex w = edge1.A == edge2.A || edge1.A == edge2.B ? edge1.A : edge1.B;
@@ -101,27 +146,45 @@ namespace Gk1Froms
                 //v2 ------ w ==== A2
                 double B1 = v1.Y - A1 * v1.X;
                 double B2 = v2.Y - A2 * v2.X;
+                double newX = w.X, newY = w.Y;
                 if (v == v1)
                 {
-                    double newX = (B2 + dy - B1 - A2 * dx) / (A1 - A2);
-                    double newY = A1 * newX + B1;
+                    if (double.IsInfinity(A1))
+                    {
+                        newX = v1.X;
+                        newY = A2 * newX + B2;
+                    }
+                    else if(double.IsInfinity(A2))
+                    {
+                        newY = A1 * w.X + B1;
+                    }
+                    else
+                    {
+                        newX = (B2 - B1) / (A1 - A2);
+                        newY = A1 * newX + B1;
+                    }
+                    
                     w.X = (int)(newX);
                     w.Y = (int)(newY);
-
-                    //using (Graphics g = Graphics.FromImage(test.Image))
-                    //{
-                    //    Pen pen = new Pen(Color.Red);
-                    //    g.DrawLine(pen, new Point(w.X - 50, (int)(A2 * (w.X - 50) + B2)), new Point(w.X + 50, (int)(A2 * (w.X + 50) + B2)));
-                    //    g.DrawLine(pen, new Point(w.X - 50, (int)(A1 * (w.X - 50) + B1)), new Point(w.X + 50, (int)(A1 * (w.X + 50) + B1)));
-                    //    //g.DrawLine(pen, oldLoc, w);
-                    //    //g.DrawLine(pen, w, v2);
-                    //    test.Refresh();
-                    //}  
                 }
                 else
                 {
-                    double newX = (B1 + dy - B2 - A1 * dx) / (A2 - A1);
-                    double newY = A1 * newX + B1;
+                    if(double.IsInfinity(A2))
+                    {
+                        newX = v2.Y;
+                        newY = A1 * newX + B1;
+                    }
+                    else if (double.IsInfinity(A1))
+                    {
+                        newY = A2 * w.X + B2;
+                        B2 = w.Y - A2 * w.X;
+                    }
+                    else
+                    {
+                        newX = (B1 - B2) / (A2 - A1);
+                        newY = A1 * newX + B1;
+                    }
+                    
                     w.X = (int)(newX);
                     w.Y = (int)(newY);
                 }       
@@ -143,13 +206,22 @@ namespace Gk1Froms
         {
             return edge1.A == v || edge1.B == v || edge2.A == v || edge2.B == v;
         }
+
+        public override void Clear()
+        {
+            edge1.RelationTypeE = RelationType.NoRelation;
+            edge2.RelationTypeE = RelationType.NoRelation;
+        }
     }
-    class Vertex
+
+    [Serializable]
+    public class Vertex
     {
         const int VERTEX_SIZE = 10;
         public int X { get; set; }
         public int Y { get; set; }
 
+        public Vertex() { }
         public Vertex(int x, int y)
         {
             X = x;
@@ -195,13 +267,19 @@ namespace Gk1Froms
         public static implicit operator Point(Vertex v) => new Point(v.X,v.Y);
     }
 
-    class Edge
+    [Serializable]
+    public class Edge
     {
         public Vertex A { get; set; }
         public Vertex B { get; set; }
 
+        public RelationType RelationTypeE { get; set; }
+        public Vertex W { get; set; }
+
+        public Edge() { }
         public Edge(Vertex a, Vertex b)
         {
+            RelationTypeE = RelationType.NoRelation;
             A = a;
             B = b;
         }
@@ -253,21 +331,37 @@ namespace Gk1Froms
                 A.Draw(b);
                 B.Draw(b);
 
+                Point s = new Point((A.X + B.X) / 2, (A.Y + B.Y) / 2);
+                switch (RelationTypeE)
+                {
+                    case RelationType.Horizontal:
+                        s.Y -= 10;
+                        BresenhamLineAlgorithm.DrawLine(b, new Point(s.X - 10, s.Y), new Point(s.X + 10, s.Y));
+                        break;
+                    case RelationType.Vertical:
+                        s.X -= 10;
+                        BresenhamLineAlgorithm.DrawLine(b, new Point(s.X, s.Y - 10), new Point(s.X, s.Y + 10));
+                        break;
+                    case RelationType.Angle:
+                        g.DrawEllipse(pen, W.X - 10, W.Y - 10, 20, 20);
+                        break;
+                }
+
                 pen.Dispose();
             }
         }
     }
 
-    class Polygon
+    [Serializable]
+    public class Polygon
     {
         //How far detect click on edge
         const int EDGE_DISTANCE = 5;
         List<Edge> edges;
 
-        public PictureBox test;
-
         List<Relation> relations;
 
+        public Polygon() { }
         public Polygon(params Vertex[] vertices)
         {
             edges = new List<Edge>();
@@ -328,33 +422,50 @@ namespace Gk1Froms
         public void MoveEdge(Edge e, int dx, int dy)
         {
             if (!edges.Contains(e)) return;
+            List<Relation> rel = GetEdgeRelations(e, relations);
+            if(rel.Count != 0 && rel[0] is AngleRelation)
+            {
+                AngleRelation angleRel = (AngleRelation)rel[0];
+                Vertex[] changedV = angleRel.MoveEdge(e, dx, dy);
+                foreach(Vertex v in changedV)
+                {
+                    FixRelation(v, dx, dy, new List<Relation>() { rel[0] });
+                }
+                return;
+            }
             e.A.ChangeLocation(dx, dy);
             e.B.ChangeLocation(dx, dy);
-            FixRelation(e.A, relations, dx, dy);
-            FixRelation(e.B, relations, dx, dy);
+            FixRelation(e.A, dx, dy, new List<Relation>());
+            FixRelation(e.B, dx, dy, new List<Relation>());
         }
 
         public void MoveVertex(Vertex v, int dx, int dy)
         {
             if (!ContainsVertex(v)) return;
             v.ChangeLocation(dx, dy);
-            FixRelation(v, relations, dx, dy);
+            FixRelation(v, dx, dy, new List<Relation>());
         }
 
-        public void FixRelation(Vertex v, List<Relation> relations, int dx, int dy)
+        public void FixRelation(Vertex v, int dx, int dy, List<Relation> deleted)
         {
-            if (relations.Count == 0) return;
             List<Relation> vertexRel = GetVertexRelations(v, relations);
-
-            foreach(Relation r in vertexRel)
+            List<Relation> process = new List<Relation>();
+            foreach(Relation rel in vertexRel)
             {
-                r.test = this.test;
+                if(!deleted.Contains(rel))
+                {
+                    process.Add(rel);
+                }
+            }
+            if (process.Count == 0) return;          
+
+            foreach(Relation r in process)
+            {
                 Vertex[] changedV = r.Fix(v, ref dx, ref dy);
-                List<Relation> changedVrel = new List<Relation>(vertexRel);
-                changedVrel.Remove(r);
                 foreach(Vertex k in changedV)
                 {
-                    FixRelation(k, changedVrel, dx, dy);
+                    deleted.Add(r);
+                    FixRelation(k, dx, dy, deleted);
                 }
                 
             }
@@ -362,7 +473,8 @@ namespace Gk1Froms
 
         public bool CanAddRelation(Edge e, RelationType r)
         {
-            List<Relation> list = GetEdgeRelations(e, relations);
+            List<Relation> list = GetVertexRelations(e.A, relations);
+            list.AddRange(GetVertexRelations(e.B, relations));
             foreach(Relation rel in list)
             {
                 if (rel.ContainVertex(e.A) && rel.ContainVertex(e.B)) return false;
@@ -384,7 +496,7 @@ namespace Gk1Froms
             List<Relation> res = new List<Relation>();
             foreach(Relation r in rels)
             {
-                if (r.ContainVertex(e.A) || r.ContainVertex(e.B))
+                if (r.ContainVertex(e.A) && r.ContainVertex(e.B))
                     res.Add(r);
             }
             return res;
@@ -410,43 +522,78 @@ namespace Gk1Froms
             }
 
             Relation rel = null;
-            switch(r)
+            int oldLoc;
+            switch (r)
             {
                 case RelationType.Horizontal:
+                    oldLoc = e.B.Y;
                     e.B.Y = e.A.Y;
+                    FixRelation(e.B, 0, e.A.Y - oldLoc, new List<Relation>());
                     rel = new HorizontalRelation(e);
                     break;
                 case RelationType.Vertical:
+                    oldLoc = e.B.X; 
                     e.B.X = e.A.X;
+                    FixRelation(e.B, e.A.X - oldLoc, 0, new List<Relation>());
                     rel = new VerticalRelation(e);
                     break;
             }
+            e.RelationTypeE = r;
             relations.Add(rel);
         }
 
         public void AddRelation(Vertex v, RelationType r, double angle)
         {
+
             List<Edge> e2 = new List<Edge>();
             foreach (Edge e in edges)
             {
                 if (e.A == v || e.B == v) e2.Add(e);
             }
-            if (!CanAddRelation(e2[0], r) || !CanAddRelation(e2[1], r)) return;
+            if (!CanAddRelation(e2[0], r) || !CanAddRelation(e2[1], r))
+            {
+                MessageBox.Show("Cannot add relation", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                return;
+            }
 
             Vertex v2 = e2[1].A == v ? e2[1].B : e2[1].A;
             Point w2 = new Point(v2.X - v.X, v2.Y - v.Y);
 
             double prevAngle = GetAngle(v);
 
-            double dAngle =  angle - prevAngle;
+            double dAngle =  -(angle - prevAngle);
 
             double radians = (Math.PI / 180f) * dAngle;
 
             Point newW = new Point((int)(w2.X * Math.Cos(radians) - w2.Y * Math.Sin(radians)), (int)(w2.X * Math.Sin(radians) + w2.Y * Math.Cos(radians)));
+            int dx = (newW.X + v.X) - v2.X;
+            int dy = (newW.Y + v.Y) - v2.Y;
+
+            int oldv2X = v2.X;
+            int oldV2Y = v2.Y;
             v2.X = newW.X + v.X;
             v2.Y = newW.Y + v.Y;
 
+            double newAngle = GetAngle(v);
+            if (newAngle > angle + 5 || newAngle < angle - 5)
+            {
+                v2.X = oldv2X;
+                v2.Y = oldV2Y;
+                dAngle = -dAngle;
+                radians = (Math.PI / 180f) * dAngle;
+                newW = new Point((int)(w2.X * Math.Cos(radians) - w2.Y * Math.Sin(radians)), (int)(w2.X * Math.Sin(radians) + w2.Y * Math.Cos(radians)));
+                dx = (newW.X + v.X) - v2.X;
+                dy = (newW.Y + v.Y) - v2.Y;
+                v2.X = newW.X + v.X;
+                v2.Y = newW.Y + v.Y;
+            }
+
             AngleRelation angleR = new AngleRelation(e2[0], e2[1]);
+            FixRelation(v2, dx, dy, new List<Relation>());
+            e2[0].RelationTypeE = RelationType.Angle;
+            e2[1].RelationTypeE = RelationType.Angle;
+            e2[0].W = v;
+            e2[1].W = v;
             relations.Add(angleR);
         }
 
@@ -593,8 +740,19 @@ namespace Gk1Froms
             Relation res = relations.Find((Relation r) => r.ContainVertex(e.A) && r.ContainVertex(e.B));
             if(res!=null)
             {
+                res.Clear();
                 relations.Remove(res);
             }    
+        }
+
+        public void DeleteRelation(Vertex v)
+        {
+            List<Relation> res = GetVertexRelations(v, relations);
+            if(res.Count == 1 && res[0] is AngleRelation)
+            {
+                res[0].Clear();
+                relations.Remove(res[0]);
+            }
         }
 
         public void Draw(Bitmap b)

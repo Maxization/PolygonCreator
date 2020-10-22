@@ -3,10 +3,14 @@ using System.Collections.Generic;
 using System.ComponentModel;
 using System.Data;
 using System.Drawing;
+using System.IO;
 using System.Linq;
+using System.Runtime.Serialization;
+using System.Runtime.Serialization.Formatters.Binary;
 using System.Text;
 using System.Threading.Tasks;
 using System.Windows.Forms;
+using System.Xml.Serialization;
 
 namespace Gk1Froms
 {
@@ -42,9 +46,28 @@ namespace Gk1Froms
             dragEdge = false;
             startCreating = false;
             operation = Operations.PolygonAdd;
-            
+            Deserialize("polygon");
+            UpdateArea();
+            pictureBox1.Refresh();
+        }
+        private void Serialize(string filename)
+        {
+            IFormatter formatter = new BinaryFormatter();
+            Stream stream = new FileStream(filename, FileMode.Create, FileAccess.Write);
+
+            formatter.Serialize(stream, polygons[0]);
+            stream.Close();
         }
 
+        private void Deserialize(string filename)
+        {
+            IFormatter formatter = new BinaryFormatter();
+            Stream stream = new FileStream(filename, FileMode.Open);
+
+            Polygon p = (Polygon)formatter.Deserialize(stream);
+            polygons.Add(p);
+            stream.Close();
+        }
         void UpdateArea()
         {
             drawArea = new Bitmap(pictureBox1.Size.Width, pictureBox1.Size.Height);
@@ -60,6 +83,7 @@ namespace Gk1Froms
             Polygon poly = null;
             Edge edge = null;
             Vertex ver = null;
+            //Serialize("polygon");
             if (e.Button == MouseButtons.Left)
             {
                 switch (operation)
@@ -72,7 +96,6 @@ namespace Gk1Froms
                             startVertex = new Vertex(e.Location);
                             newEdge = new Edge(startVertex, newVertex);
                             newPolygon = new Polygon(newEdge);
-                            newPolygon.test = pictureBox1;
                             polygons.Add(newPolygon);
                         }
                         else
@@ -161,6 +184,7 @@ namespace Gk1Froms
         {
             ContextMenu cm = new ContextMenu();
             cm.MenuItems.Add("Add Angle", new EventHandler(Angle_Click));
+            cm.MenuItems.Add("Delete Angle", new EventHandler(Delete_ClickVertex));
             return cm;
         }
 
@@ -196,6 +220,15 @@ namespace Gk1Froms
         private void Delete_Click(object sender, EventArgs e)
         {
             polygonP.DeleteRelation(edgeP);
+            UpdateArea();
+            pictureBox1.Refresh();
+        }
+
+        private void Delete_ClickVertex(object sender, EventArgs e)
+        {
+            polygonP.DeleteRelation(vertexP);
+            UpdateArea();
+            pictureBox1.Refresh();
         }
 
         private void HorizontalR_Click(object sender, EventArgs e)
