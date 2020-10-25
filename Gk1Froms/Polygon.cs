@@ -120,15 +120,29 @@ namespace Gk1Froms
                 w.ChangeLocation(dx, dy);
                 v1.ChangeLocation(dx, dy);
 
-                double B2 = w.Y - A2 * w.X;
-                v2.Y = (int)(A2 * v2.X + B2);
+                if(double.IsInfinity(A2))
+                {
+                    v2.X = w.X;
+                }
+                else
+                {
+                    double B2 = w.Y - A2 * w.X;
+                    v2.Y = (int)(A2 * v2.X + B2);
+                }
             }
             else
             {
                 w.ChangeLocation(dx, dy);
                 v2.ChangeLocation(dx, dy);
-                double B1 = w.Y - A1 * w.X;
-                v1.Y = (int)(A1 * v1.X + B1);
+                if(double.IsInfinity(A1))
+                {
+                    v1.X = w.X; 
+                }
+                else
+                {
+                    double B1 = w.Y - A1 * w.X;
+                    v1.Y = (int)(A1 * v1.X + B1);
+                }     
             }
             return new Vertex[] { v1, v2 };
 
@@ -177,7 +191,6 @@ namespace Gk1Froms
                     else if (double.IsInfinity(A1))
                     {
                         newY = A2 * w.X + B2;
-                        B2 = w.Y - A2 * w.X;
                     }
                     else
                     {

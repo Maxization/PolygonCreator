@@ -46,7 +46,14 @@ namespace Gk1Froms
             dragEdge = false;
             startCreating = false;
             operation = Operations.PolygonAdd;
-            Deserialize("polygon");
+            try
+            {
+                Deserialize("polygon");
+            }
+            catch(Exception)
+            {
+                MessageBox.Show("Cannot read file with polygon", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+            }
             UpdateArea();
             pictureBox1.Refresh();
         }
