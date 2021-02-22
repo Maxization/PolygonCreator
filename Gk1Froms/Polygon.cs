@@ -366,7 +366,7 @@ namespace Gk1Froms
     }
 
     [Serializable]
-    public class Polygon
+    public class Polygon : Figure
     {
         //How far detect click on edge
         const int EDGE_DISTANCE = 5;
@@ -432,6 +432,19 @@ namespace Gk1Froms
             }
         }
 
+        public Polygon Copy()
+        {
+            List<Edge> edgesCpy = new List<Edge>();
+            foreach(Edge e in edges)
+            {
+                Vertex vA = new Vertex(e.A.X, e.A.Y);
+                Vertex vB = new Vertex(e.B.X, e.B.Y);
+                Edge newEdge = new Edge(vA, vB);
+                edgesCpy.Add(newEdge);
+            }
+            Polygon polyCpy = new Polygon(edgesCpy.ToArray());
+            return polyCpy;
+        }
         public void MoveEdge(Edge e, int dx, int dy)
         {
             if (!edges.Contains(e)) return;
@@ -768,12 +781,84 @@ namespace Gk1Froms
             }
         }
 
-        public void Draw(Bitmap b)
+        public override void Draw(Bitmap b)
         {
             foreach(Edge e in edges)
             {
                 e.Draw(b);
             }
         }
+    }
+
+    class myElipse : Figure
+    {
+        Point S,R;
+
+        public myElipse(Point S, Point R)
+        {
+            this.S = S;
+            this.R = R;
+        }
+
+        public void MoveR(int dx, int dy)
+        {
+            R.X += dx;
+            R.Y += dy;
+        }
+
+        public myElipse Copy()
+        {
+            return new myElipse(S, R);
+        }
+        int distance(Point A, Point B)
+        {
+            return (int)Math.Sqrt((A.X - B.X) * (A.X - B.X) + (A.Y - B.Y) * (A.Y - B.Y));
+        }
+
+        public bool GetElipse(Point p, out myElipse eli)
+        {
+            eli = null;
+            if(isClose(p))
+            {
+                eli = this;
+                return true;
+            }
+            return false;
+        }
+
+        public void Move(int dx, int dy)
+        {
+            S.X += dx;
+            S.Y += dy;
+
+            R.X += dx;
+            R.Y += dy;
+        }
+
+        private bool isClose(Point p)
+        {
+            Point s = new Point(S.X + distance(S, R)/2, S.Y + distance(S, R)/2);
+            if ((p.X - s.X) * (p.X - s.X) + (p.Y - s.Y) * (p.Y - s.Y) <= (distance(s, R) + 5) * (distance(s, R) + 5))
+                return true;
+            return false;
+        }
+
+        public override void Draw(Bitmap b)
+        {
+            using (Graphics g = Graphics.FromImage(b))
+            {
+                Pen pen = new Pen(Color.Black, 2);
+                int r = distance(S, R);
+                g.DrawEllipse(pen, S.X, S.Y, r, r);
+                pen.Dispose();
+            }
+        }
+    }
+
+    [Serializable]
+    public abstract class Figure
+    {
+        public abstract void Draw(Bitmap b);
+
     }
 }

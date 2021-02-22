@@ -43,6 +43,11 @@
             this.label1 = new System.Windows.Forms.Label();
             this.PolygonMove = new System.Windows.Forms.RadioButton();
             this.PolygonAdd = new System.Windows.Forms.RadioButton();
+            this.addElipse = new System.Windows.Forms.RadioButton();
+            this.label4 = new System.Windows.Forms.Label();
+            this.elipseMove = new System.Windows.Forms.RadioButton();
+            this.sizeElipse = new System.Windows.Forms.RadioButton();
+            this.deleteElipse = new System.Windows.Forms.RadioButton();
             this.tableLayoutPanel1.SuspendLayout();
             this.panel1.SuspendLayout();
             ((System.ComponentModel.ISupportInitialize)(this.pictureBox1)).BeginInit();
@@ -100,6 +105,11 @@
             // 
             // groupBox1
             // 
+            this.groupBox1.Controls.Add(this.deleteElipse);
+            this.groupBox1.Controls.Add(this.sizeElipse);
+            this.groupBox1.Controls.Add(this.elipseMove);
+            this.groupBox1.Controls.Add(this.label4);
+            this.groupBox1.Controls.Add(this.addElipse);
             this.groupBox1.Controls.Add(this.polygonDelete);
             this.groupBox1.Controls.Add(this.edgeMove);
             this.groupBox1.Controls.Add(this.label3);
@@ -227,6 +237,61 @@
             this.PolygonAdd.UseVisualStyleBackColor = true;
             this.PolygonAdd.CheckedChanged += new System.EventHandler(this.PolygonAdd_CheckedChanged);
             // 
+            // addElipse
+            // 
+            this.addElipse.AutoSize = true;
+            this.addElipse.Location = new System.Drawing.Point(212, 36);
+            this.addElipse.Name = "addElipse";
+            this.addElipse.Size = new System.Drawing.Size(44, 17);
+            this.addElipse.TabIndex = 11;
+            this.addElipse.TabStop = true;
+            this.addElipse.Text = "Add";
+            this.addElipse.UseVisualStyleBackColor = true;
+            this.addElipse.CheckedChanged += new System.EventHandler(this.addElipse_CheckedChanged);
+            // 
+            // label4
+            // 
+            this.label4.AutoSize = true;
+            this.label4.Font = new System.Drawing.Font("Microsoft Sans Serif", 10F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(238)));
+            this.label4.Location = new System.Drawing.Point(210, 16);
+            this.label4.Name = "label4";
+            this.label4.Size = new System.Drawing.Size(46, 17);
+            this.label4.TabIndex = 12;
+            this.label4.Text = "Elipse";
+            // 
+            // elipseMove
+            // 
+            this.elipseMove.AutoSize = true;
+            this.elipseMove.Location = new System.Drawing.Point(212, 59);
+            this.elipseMove.Name = "elipseMove";
+            this.elipseMove.Size = new System.Drawing.Size(52, 17);
+            this.elipseMove.TabIndex = 13;
+            this.elipseMove.Text = "Move";
+            this.elipseMove.UseVisualStyleBackColor = true;
+            this.elipseMove.CheckedChanged += new System.EventHandler(this.elipseMove_CheckedChanged);
+            // 
+            // sizeElipse
+            // 
+            this.sizeElipse.AutoSize = true;
+            this.sizeElipse.Location = new System.Drawing.Point(212, 76);
+            this.sizeElipse.Name = "sizeElipse";
+            this.sizeElipse.Size = new System.Drawing.Size(45, 17);
+            this.sizeElipse.TabIndex = 14;
+            this.sizeElipse.Text = "Size";
+            this.sizeElipse.UseVisualStyleBackColor = true;
+            this.sizeElipse.CheckedChanged += new System.EventHandler(this.sizeElipse_CheckedChanged);
+            // 
+            // deleteElipse
+            // 
+            this.deleteElipse.AutoSize = true;
+            this.deleteElipse.Location = new System.Drawing.Point(212, 95);
+            this.deleteElipse.Name = "deleteElipse";
+            this.deleteElipse.Size = new System.Drawing.Size(56, 17);
+            this.deleteElipse.TabIndex = 15;
+            this.deleteElipse.Text = "Delete";
+            this.deleteElipse.UseVisualStyleBackColor = true;
+            this.deleteElipse.CheckedChanged += new System.EventHandler(this.deleteElipse_CheckedChanged);
+            // 
             // Form1
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
@@ -263,6 +328,11 @@
         private System.Windows.Forms.Label label1;
         private System.Windows.Forms.RadioButton PolygonMove;
         private System.Windows.Forms.RadioButton PolygonAdd;
+        private System.Windows.Forms.Label label4;
+        private System.Windows.Forms.RadioButton addElipse;
+        private System.Windows.Forms.RadioButton elipseMove;
+        private System.Windows.Forms.RadioButton sizeElipse;
+        private System.Windows.Forms.RadioButton deleteElipse;
     }
 }
 

@@ -23,32 +23,46 @@ namespace Gk1Froms
         PolygonMove,
         VertexDelete,
         PolygonDelete,
+        ElipseAdd,
+        ElipseMove,
+        ElipseSize,
+        ElipseDelete,
     }
     public partial class Form1 : Form
     {
         Bitmap drawArea;
         List<Polygon> polygons;
-        bool dragVertex, dragPolygon, dragEdge, startCreating;
+        List<myElipse> elipses;
+        bool dragVertex, dragPolygon, dragEdge, startCreating, dragElipse, creatingElipse;
         Point pointFrom;
+        myElipse elipseP;
         Vertex vertexP, newVertex, startVertex;
         Polygon polygonP, newPolygon;
         Edge edgeP, newEdge;
         Operations operation = Operations.VertexMove;
+        Polygon oldPolygon;
+        myElipse oldElipse;
+        Point S,R;
+        
+        
 
         public Form1()
         {
             InitializeComponent();
             polygons = new List<Polygon>();
+            elipses = new List<myElipse>();
             drawArea = new Bitmap(pictureBox1.Size.Width, pictureBox1.Size.Height);
             pictureBox1.Image = drawArea;
             dragVertex = false;
             dragPolygon = false;
             dragEdge = false;
             startCreating = false;
+            dragElipse = false;
+            creatingElipse = false;
             operation = Operations.PolygonAdd;
             try
             {
-                Deserialize("polygon");
+                Deserialize("./../../polygon");
             }
             catch(Exception)
             {
@@ -78,9 +92,22 @@ namespace Gk1Froms
         void UpdateArea()
         {
             drawArea = new Bitmap(pictureBox1.Size.Width, pictureBox1.Size.Height);
-            foreach (Polygon p in polygons)
+            List<Figure> figureList = new List<Figure>(polygons);
+            figureList.AddRange(elipses);
+
+            if(oldPolygon != null)
             {
-                p.Draw(drawArea);
+                oldPolygon.Draw(drawArea);
+            }
+
+            if(oldElipse != null)
+            {
+                oldElipse.Draw(drawArea);
+            }
+
+            foreach (Figure f in figureList)
+            {
+                f.Draw(drawArea);
             }
             pictureBox1.Image = drawArea;
             pictureBox1.Refresh();
@@ -90,6 +117,7 @@ namespace Gk1Froms
             Polygon poly = null;
             Edge edge = null;
             Vertex ver = null;
+            myElipse delEli = null;
             //Serialize("polygon");
             if (e.Button == MouseButtons.Left)
             {
@@ -126,6 +154,7 @@ namespace Gk1Froms
                     case Operations.VertexMove:
                         if (FindVertex(e.Location, out vertexP, out polygonP))
                         {
+                            oldPolygon = polygonP.Copy();
                             dragVertex = true;
                         }
                         break;
@@ -150,6 +179,7 @@ namespace Gk1Froms
                     case Operations.PolygonMove:
                         if(FindPolygon(e.Location, out polygonP))
                         {
+                            oldPolygon = polygonP.Copy();
                             pointFrom = e.Location;
                             dragPolygon = true;
                         }
@@ -157,6 +187,7 @@ namespace Gk1Froms
                     case Operations.EdgeMove:
                         if(FindEdge(e.Location, out edgeP, out polygonP))
                         {
+                            oldPolygon = polygonP.Copy();
                             pointFrom = e.Location;
                             dragEdge = true;
                         }
@@ -165,6 +196,35 @@ namespace Gk1Froms
                         if(FindPolygon(e.Location, out poly))
                         {
                             polygons.Remove(poly);
+                            UpdateArea();
+                        }
+                        break;
+                    case Operations.ElipseAdd:
+                        S = new Point(e.Location.X, e.Location.Y);
+                        R = new Point(e.Location.X, e.Location.Y);
+                        elipseP = new myElipse(S, R);
+                        elipses.Add(elipseP);
+                        creatingElipse = true;
+                        break;
+                    case Operations.ElipseMove:
+                        if(FindElipse(e.Location, out elipseP))
+                        {
+                            oldElipse = elipseP.Copy();
+                            pointFrom = e.Location;
+                            dragElipse = true;
+                        }
+                        break;
+                    case Operations.ElipseSize:
+                        if(FindElipse(e.Location, out elipseP))
+                        {
+                            oldElipse = elipseP.Copy();
+                            creatingElipse = true;
+                        }
+                        break;
+                    case Operations.ElipseDelete:
+                        if(FindElipse(e.Location,out delEli))
+                        {
+                            elipses.Remove(delEli);
                             UpdateArea();
                         }
                         break;
@@ -291,6 +351,18 @@ namespace Gk1Froms
             return best != double.MaxValue;
         }
 
+        private bool FindElipse(Point w, out myElipse elipse)
+        {
+            elipse = null;
+            foreach (myElipse eli in elipses)
+            {
+                if (eli.GetElipse(w,out elipse))
+                {
+                    return true;
+                }
+            }
+            return false;
+        }
         private bool FindVertex(Point w, out Vertex vertex, out Polygon polygon)
         {
             vertex = null;
@@ -310,6 +382,32 @@ namespace Gk1Froms
             dragVertex = false;
             dragPolygon = false;
             dragEdge = false;
+            dragElipse = false;
+            creatingElipse = false;
+            oldPolygon = null;
+            oldElipse = null;
+            UpdateArea();
+            pictureBox1.Refresh();
+        }
+
+        private void elipseMove_CheckedChanged(object sender, EventArgs e)
+        {
+            RadioButtonFunc((RadioButton)sender, Operations.ElipseMove);
+        }
+
+        private void sizeElipse_CheckedChanged(object sender, EventArgs e)
+        {
+            RadioButtonFunc((RadioButton)sender, Operations.ElipseSize);
+        }
+
+        private void deleteElipse_CheckedChanged(object sender, EventArgs e)
+        {
+            RadioButtonFunc((RadioButton)sender, Operations.ElipseDelete);
+        }
+
+        private void addElipse_CheckedChanged(object sender, EventArgs e)
+        {
+            RadioButtonFunc((RadioButton)sender, Operations.ElipseAdd);
         }
 
         private void pictureBox1_MouseMove(object sender, MouseEventArgs e)
@@ -338,6 +436,16 @@ namespace Gk1Froms
             if(dragEdge)
             {
                 polygonP.MoveEdge(edgeP, dx, dy);
+                UpdateArea();
+            }
+            if(creatingElipse)
+            {
+                elipseP.MoveR(dx, dy);
+                UpdateArea();
+            }
+            if(dragElipse)
+            {
+                elipseP.Move(dx, dy);
                 UpdateArea();
             }
         }
